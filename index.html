@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Movie Hub BD</title>
+<style>
+body{margin:0;background:#080a11;color:#f7f7fb;font:16px Arial,sans-serif}header,main,footer{padding:20px;max-width:1200px;margin:auto}header{display:flex;justify-content:space-between;flex-wrap:wrap}.logo{font-size:24px;font-weight:bold}input{padding:12px;width:min(500px,80%);border-radius:8px;border:1px solid #555;background:#151a2a;color:white}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:20px}.card{background:#151a2a;border:1px solid #333;border-radius:12px;overflow:hidden}.poster{height:220px;background:linear-gradient(135deg,#4338ca,#db2777);display:flex;align-items:end;padding:12px;font-weight:bold}.details{padding:12px;color:#cbd5e1}.tag{color:#c4b5fd;font-size:12px}a{color:#c4b5fd}
+</style></head>
+<body><header><div class="logo">MOVIE HUB BD</div><a href="/admin/">Admin Panel</a></header>
+<main><h1>Movies & Series</h1><p>Search the library below.</p><input id="search" placeholder="Search movie title..."><div id="grid" class="grid"></div></main>
+<footer>© 2026 Movie Hub BD</footer>
+<script>
+const fallback=[{title:"Nebula Run",year:"2026",language:"English",category:"Sci-Fi",resolution:"1080p",poster:"",downloadUrl:""},{title:"Ocean Light",year:"2026",language:"English",category:"Adventure",resolution:"720p",poster:"",downloadUrl:""}];
+let movies=[];
+fetch("/content/movies.json").then(r=>r.json()).then(data=>{movies=Array.isArray(data)?data:(data.movies||[]);render()}).catch(()=>{movies=fallback;render()});
+function render(){const q=document.getElementById("search").value.toLowerCase();const grid=document.getElementById("grid");grid.innerHTML="";movies.filter(m=>(m.title||"").toLowerCase().includes(q)).forEach(m=>{const card=document.createElement("article");card.className="card";const poster=document.createElement("div");poster.className="poster";if(m.poster){poster.style.backgroundImage=`url('${m.poster}')`;poster.style.backgroundSize="cover";poster.style.backgroundPosition="center"}poster.textContent=m.title||"Untitled";const d=document.createElement("div");d.className="details";d.textContent=[m.year,m.language,m.category,m.resolution].filter(Boolean).join(" · ");card.append(poster,d);if(m.downloadUrl){const a=document.createElement("a");a.href=m.downloadUrl;a.textContent="Open link";a.target="_blank";a.rel="noopener";d.append(document.createElement("br"),a)}grid.append(card)})}
+document.getElementById("search").addEventListener("input",render);
+</script></body></html>
