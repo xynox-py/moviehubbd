@@ -1,16 +1,184 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Movie Hub BD</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Movie Hub BD</title>
 <style>
-body{margin:0;background:#080a11;color:#f7f7fb;font:16px Arial,sans-serif}header,main,footer{padding:20px;max-width:1200px;margin:auto}header{display:flex;justify-content:space-between;flex-wrap:wrap}.logo{font-size:24px;font-weight:bold}input{padding:12px;width:min(500px,80%);border-radius:8px;border:1px solid #555;background:#151a2a;color:white}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:20px}.card{background:#151a2a;border:1px solid #333;border-radius:12px;overflow:hidden}.poster{height:220px;background:linear-gradient(135deg,#4338ca,#db2777);display:flex;align-items:end;padding:12px;font-weight:bold}.details{padding:12px;color:#cbd5e1}.tag{color:#c4b5fd;font-size:12px}a{color:#c4b5fd}
-</style></head>
-<body><header><div class="logo">MOVIE HUB BD</div><a href="/admin/">Admin Panel</a></header>
-<main><h1>Movies & Series</h1><p>Search the library below.</p><input id="search" placeholder="Search movie title..."><div id="grid" class="grid"></div></main>
+*{box-sizing:border-box}
+body{margin:0;background:#080b14;color:#fff;font-family:Arial,sans-serif}
+header{padding:18px 5%;background:#111729;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-size:25px;font-weight:bold;color:#a78bfa}
+button,a{cursor:pointer}
+button{border:0;border-radius:8px;padding:11px 15px;background:#7c3aed;color:white;font-weight:bold}
+button:hover{background:#6d28d9}
+main{max-width:1200px;margin:auto;padding:22px 15px}
+input,select{width:100%;padding:12px;margin:6px 0 13px;border:1px solid #343b50;border-radius:8px;background:#111729;color:white}
+.search{display:flex;gap:8px}
+.search input{flex:1}
+h2{margin-top:25px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:15px}
+.card{background:#151b2c;border-radius:12px;overflow:hidden}
+.poster{width:100%;height:235px;object-fit:cover;background:#292044}
+.info{padding:12px}
+.info h3{font-size:16px;margin:0 0 8px}
+.muted{color:#aab2c5;font-size:13px}
+.download{display:block;text-align:center;text-decoration:none;background:#7c3aed;color:white;padding:10px;border-radius:7px;margin-top:12px}
+.panel{background:#12192a;padding:18px;border-radius:12px;margin-top:25px}
+.hidden{display:none}
+footer{text-align:center;color:#9ca3af;padding:30px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">MOVIE HUB BD</div>
+  <button id="adminBtn">Admin Panel</button>
+</header>
+
+<main>
+  <div class="search">
+    <input id="search" placeholder="Search movies...">
+    <button id="searchBtn">Search</button>
+  </div>
+
+  <h2>Latest Movies</h2>
+  <div id="movieGrid" class="grid"></div>
+  <p id="empty" class="muted">No movies added yet.</p>
+
+  <section id="adminPanel" class="panel hidden">
+    <h2>Admin Panel — Add Movie</h2>
+    <p class="muted">Enter details for a movie you own or are authorized to distribute.</p>
+    <form id="movieForm">
+      <label>Movie Name</label>
+      <input id="title" required placeholder="Movie title">
+
+      <label>Poster Image URL</label>
+      <input id="poster" type="url" required placeholder="https://example.com/poster.jpg">
+
+      <label>Category / Language</label>
+      <input id="category" required placeholder="Bangla, Hindi, Action...">
+
+      <label>Release Year</label>
+      <input id="year" type="number" min="1900" max="2100" placeholder="2026">
+
+      <label>Authorized Download URL</label>
+      <input id="download" type="url" required placeholder="https://example.com/movie">
+
+      <button type="submit">Add Movie</button>
+      <button type="button" id="closeBtn">Close Panel</button>
+    </form>
+    <p id="message" class="muted"></p>
+  </section>
+</main>
+
 <footer>© 2026 Movie Hub BD</footer>
+
 <script>
-const fallback=[{title:"Nebula Run",year:"2026",language:"English",category:"Sci-Fi",resolution:"1080p",poster:"",downloadUrl:""},{title:"Ocean Light",year:"2026",language:"English",category:"Adventure",resolution:"720p",poster:"",downloadUrl:""}];
-let movies=[];
-fetch("/content/movies.json").then(r=>r.json()).then(data=>{movies=Array.isArray(data)?data:(data.movies||[]);render()}).catch(()=>{movies=fallback;render()});
-function render(){const q=document.getElementById("search").value.toLowerCase();const grid=document.getElementById("grid");grid.innerHTML="";movies.filter(m=>(m.title||"").toLowerCase().includes(q)).forEach(m=>{const card=document.createElement("article");card.className="card";const poster=document.createElement("div");poster.className="poster";if(m.poster){poster.style.backgroundImage=`url('${m.poster}')`;poster.style.backgroundSize="cover";poster.style.backgroundPosition="center"}poster.textContent=m.title||"Untitled";const d=document.createElement("div");d.className="details";d.textContent=[m.year,m.language,m.category,m.resolution].filter(Boolean).join(" · ");card.append(poster,d);if(m.downloadUrl){const a=document.createElement("a");a.href=m.downloadUrl;a.textContent="Open link";a.target="_blank";a.rel="noopener";d.append(document.createElement("br"),a)}grid.append(card)})}
-document.getElementById("search").addEventListener("input",render);
-</script></body></html>
+const STORAGE_KEY = "moviehubbd_movies";
+let movies = [];
+
+try {
+  movies = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  if (!Array.isArray(movies)) movies = [];
+} catch {
+  movies = [];
+}
+
+const grid = document.getElementById("movieGrid");
+const empty = document.getElementById("empty");
+const panel = document.getElementById("adminPanel");
+
+function saveMovies() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
+    return true;
+  } catch {
+    document.getElementById("message").textContent =
+      "Could not save. Browser storage may be full.";
+    return false;
+  }
+}
+
+function renderMovies() {
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  const filtered = movies.filter(m =>
+    (m.title + " " + m.category + " " + m.year)
+      .toLowerCase().includes(q)
+  );
+
+  grid.replaceChildren();
+  empty.style.display = filtered.length ? "none" : "block";
+
+  filtered.forEach(m => {
+    const card = document.createElement("article");
+    card.className = "card";const img = document.createElement("img");
+    img.className = "poster";
+    img.src = m.poster;
+    img.alt = m.title + " poster";
+    img.loading = "lazy";
+    img.onerror = () => { img.style.visibility = "hidden"; };
+
+    const info = document.createElement("div");
+    info.className = "info";
+
+    const title = document.createElement("h3");
+    title.textContent = m.title;
+
+    const meta = document.createElement("p");
+    meta.className = "muted";
+    meta.textContent = m.category + (m.year ? " · " + m.year : "");
+
+    const link = document.createElement("a");
+    link.className = "download";
+    link.href = m.download;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Download / Open";
+
+    info.append(title, meta, link);
+    card.append(img, info);
+    grid.append(card);
+  });
+}
+
+document.getElementById("adminBtn").onclick = () => {
+  panel.classList.toggle("hidden");
+};
+
+document.getElementById("closeBtn").onclick = () => {
+  panel.classList.add("hidden");
+};
+
+document.getElementById("searchBtn").onclick = renderMovies;
+document.getElementById("search").addEventListener("input", renderMovies);
+
+document.getElementById("movieForm").addEventListener("submit", e => {
+  e.preventDefault();
+
+  const movie = {
+    title: document.getElementById("title").value.trim(),
+    poster: document.getElementById("poster").value.trim(),
+    category: document.getElementById("category").value.trim(),
+    year: document.getElementById("year").value,
+    download: document.getElementById("download").value.trim()
+  };
+
+  if (!movie.title  !movie.poster  !movie.category || !movie.download) {
+    return;
+  }
+
+  movies.unshift(movie);
+  if (!saveMovies()) {
+    movies.shift();
+    return;
+  }
+
+  renderMovies();
+  e.target.reset();
+  document.getElementById("message").textContent = "Movie added in this browser.";
+});
+
+renderMovies();
+</script>
+</body>
+</html>
